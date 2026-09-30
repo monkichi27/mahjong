@@ -1,5 +1,5 @@
 /* Offline support: cache app shell, serve from cache, refresh in background. */
-const CACHE = 'mj3-v1';
+const CACHE = 'mj3-v2';
 const ASSETS = ['./', './index.html', './style.css', './game.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png'];
 

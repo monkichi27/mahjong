@@ -309,6 +309,7 @@ const state = {
   over: false,
   bbox: null,
   solution: [],
+  pending: null,      // matched triple awaiting its pop animation
 };
 
 function loadSave() {
@@ -335,6 +336,8 @@ function startLevel(L) {
   state.history = [];
   state.helpers = helpersFor(L);
   state.over = false;
+  if (state.pending) clearTimeout(state.pending.timer);
+  state.pending = null;
   els.parked.classList.remove('active');
   els.tray.classList.remove('danger');
 
@@ -405,7 +408,7 @@ function place(t, p, z) {
   el.style.zIndex = z;
 }
 
-function layoutAll(instant = false) {
+function layoutAll(instant = false, trayList = state.tray) {
   const m = boardMetrics();
   for (const t of state.tiles) {
     if (instant) t.el.classList.add('no-anim');
@@ -414,7 +417,7 @@ function layoutAll(instant = false) {
       t.el.classList.remove('in-tray');
     }
   }
-  state.tray.forEach((id, i) => { const t = state.tiles[id]; place(t, slotPos(els.tray, i), 500); t.el.classList.add('in-tray'); });
+  trayList.forEach((id, i) => { const t = state.tiles[id]; place(t, slotPos(els.tray, i), 500); t.el.classList.add('in-tray'); });
   state.parked.forEach((id, i) => { const t = state.tiles[id]; place(t, slotPos(els.parked, i), 400); t.el.classList.add('in-tray'); });
   if (instant) requestAnimationFrame(() => requestAnimationFrame(() => { for (const t of state.tiles) t.el.classList.remove('no-anim'); }));
 }
@@ -463,6 +466,7 @@ function onTileTap(t) {
     t.el.classList.remove('shake'); void t.el.offsetWidth; t.el.classList.add('shake');
     return;
   }
+  flushPending();
   audio.tap(); buzz(8);
   const from = t.where;
   if (from === 'parked') state.parked.splice(state.parked.indexOf(t.id), 1);
@@ -473,45 +477,61 @@ function onTileTap(t) {
   if (idx >= 0) state.tray.splice(idx + 1, 0, t.id); else state.tray.push(t.id);
   state.history.push({ id: t.id, from });
   t.el.style.zIndex = 600;
-
   if (state.parked.length === 0) els.parked.classList.remove('active');
-  layoutAll();
-  updateCovered();
 
   const same = state.tray.filter(id => state.tiles[id].type === t.type);
   if (same.length >= 3) {
-    setTimeout(() => clearTriple(same.slice(0, 3)), 220);
-  } else if (state.tray.length >= TRAY_SIZE) {
-    state.over = true;
-    setTimeout(gameOver, 350);
+    // Update state immediately (so fast taps can't corrupt the tray);
+    // keep the three visible in their slots for a moment, then pop them.
+    const visual = state.tray.slice();
+    const matched = same.slice(0, 3);
+    for (const id of matched) {
+      state.tiles[id].where = 'gone';
+      state.tray.splice(state.tray.indexOf(id), 1);
+    }
+    layoutAll(false, visual);
+    state.pending = { ids: matched, timer: setTimeout(popMatched, 220) };
+  } else {
+    layoutAll();
+    if (state.tray.length >= TRAY_SIZE) {
+      state.over = true;
+      setTimeout(gameOver, 350);
+    }
   }
+  updateCovered();
   updateHUD();
 }
 
-function clearTriple(ids) {
-  for (const id of ids) {
-    const t = state.tiles[id];
-    t.where = 'gone';
-    state.tray.splice(state.tray.indexOf(id), 1);
-    const m = t.el.style.transform.replace(/ scale\([^)]*\)/, '');
-    t.el.style.transform = m + ' scale(1.25)';
-    setTimeout(() => { t.el.style.transform = m + ' scale(0)'; t.el.classList.add('gone'); }, 120);
-    setTimeout(() => t.el.remove(), 500);
+/** Play the pop animation for a matched triple whose state is already cleared. */
+function popMatched() {
+  const p = state.pending;
+  if (!p) return;
+  state.pending = null;
+  clearTimeout(p.timer);
+  for (const id of p.ids) {
+    const el = state.tiles[id].el;
+    const m = el.style.transform.replace(/ scale\([^)]*\)/, '');
+    el.style.transform = m + ' scale(1.25)';
+    el.style.zIndex = 650;
+    setTimeout(() => { el.style.transform = m + ' scale(0)'; el.classList.add('gone'); }, 120);
+    setTimeout(() => el.remove(), 500);
   }
   audio.match(); buzz([20, 30, 20]);
-  setTimeout(() => layoutAll(), 160);
-  updateHUD();
+  setTimeout(() => layoutAll(), 140);
   if (remainingCount() === 0) {
     state.over = true;
-    setTimeout(win, 650);
-  } else if (state.tray.length >= TRAY_SIZE) {
-    state.over = true;
-    setTimeout(gameOver, 350);
+    setTimeout(win, 600);
   }
+}
+
+/** If a triple is still waiting for its animation, pop it right now. */
+function flushPending() {
+  if (state.pending) popMatched();
 }
 
 function undo() {
   if (state.helpers.undo <= 0) return false;
+  flushPending();
   let h;
   while (state.history.length) {
     const cand = state.history.pop();
@@ -533,6 +553,7 @@ function undo() {
 
 function popOut() {
   if (state.helpers.pop <= 0 || state.tray.length === 0 || state.parked.length > 0) return false;
+  flushPending();
   const ids = state.tray.splice(0, PARK_SIZE);
   for (const id of ids) { state.tiles[id].where = 'parked'; state.parked.push(id); }
   state.helpers.pop--;
