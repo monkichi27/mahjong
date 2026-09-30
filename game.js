@@ -310,6 +310,7 @@ const state = {
   bbox: null,
   solution: [],
   pending: null,      // matched triple awaiting its pop animation
+  gen: 0,             // bumped on every level start; stale timers check it
 };
 
 function loadSave() {
@@ -327,6 +328,7 @@ function save() {
 // Level lifecycle
 // ============================================================
 function startLevel(L) {
+  state.gen++;
   state.level = L;
   save();
   els.stage.innerHTML = '';
@@ -395,7 +397,7 @@ function boardPos(t, m) {
 }
 
 function slotPos(container, index) {
-  const slot = container.children[index];
+  const slot = container.children[Math.min(index, container.children.length - 1)];
   const r = slot.getBoundingClientRect();
   return { x: r.left, y: r.top, w: r.width, h: r.height };
 }
@@ -490,16 +492,22 @@ function onTileTap(t) {
       state.tray.splice(state.tray.indexOf(id), 1);
     }
     layoutAll(false, visual);
-    state.pending = { ids: matched, timer: setTimeout(popMatched, 220) };
+    state.pending = { ids: matched, timer: later(popMatched, 220) };
   } else {
     layoutAll();
     if (state.tray.length >= TRAY_SIZE) {
       state.over = true;
-      setTimeout(gameOver, 350);
+      later(gameOver, 350);
     }
   }
   updateCovered();
   updateHUD();
+}
+
+/** Run fn later unless a new level has started in the meantime. */
+function later(fn, ms) {
+  const gen = state.gen;
+  return setTimeout(() => { if (state.gen === gen) fn(); }, ms);
 }
 
 /** Play the pop animation for a matched triple whose state is already cleared. */
@@ -517,10 +525,10 @@ function popMatched() {
     setTimeout(() => el.remove(), 500);
   }
   audio.match(); buzz([20, 30, 20]);
-  setTimeout(() => layoutAll(), 140);
+  later(() => layoutAll(), 140);
   if (remainingCount() === 0) {
     state.over = true;
-    setTimeout(win, 600);
+    later(win, 600);
   }
 }
 
@@ -540,8 +548,9 @@ function undo() {
   if (!h) { updateHUD(); return false; }
   const t = state.tiles[h.id];
   state.tray.splice(state.tray.indexOf(t.id), 1);
-  t.where = h.from;
-  if (h.from === 'parked') { state.parked.push(t.id); els.parked.classList.add('active'); }
+  // Return to where it came from; if the parked row is full again, its board slot is still free.
+  t.where = (h.from === 'parked' && state.parked.length < PARK_SIZE) ? 'parked' : 'board';
+  if (t.where === 'parked') { state.parked.push(t.id); els.parked.classList.add('active'); }
   state.helpers.undo--;
   state.over = false;
   audio.helper();
@@ -560,7 +569,7 @@ function popOut() {
   state.over = false;
   audio.helper();
   els.parked.classList.add('active');
-  setTimeout(() => { layoutAll(); updateCovered(); }, 260);
+  later(() => { layoutAll(); updateCovered(); }, 260);
   updateHUD();
   return true;
 }

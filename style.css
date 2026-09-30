@@ -178,7 +178,6 @@ body {
   cursor: pointer;
   will-change: transform;
   transition: transform 0.28s cubic-bezier(.2,.8,.3,1.1), width 0.28s, height 0.28s, opacity 0.25s;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
 }
 .tile.no-anim { transition: none !important; }
 .tile .face {
@@ -190,6 +189,7 @@ body {
   box-shadow:
     0 3px 0 var(--cream-edge),
     0 4px 0 #a8965f,
+    0 6px 6px rgba(0,0,0,0.35),
     inset 0 1px 0 #fff;
   overflow: hidden;
 }
@@ -213,7 +213,6 @@ body {
 @keyframes shake {
   0%,100% { margin-left: 0; } 25% { margin-left: -4px; } 75% { margin-left: 4px; }
 }
-.tile.in-tray { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); }
 
 /* ---------- Modal ---------- */
 #modal {
