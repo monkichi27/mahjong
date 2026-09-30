@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ไพ่นกกระจอก จับ 3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="เกมจับคู่ไพ่นกกระจอก 3 ใบ เล่นฟรี ไม่มีโฆษณา สำหรับมือถือ">
+<meta name="theme-color" content="#0f6b4f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ไพ่นกกระจอก">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="hud-left">
+      <div class="hud-level">ด่าน <span id="hud-level">1</span></div>
+      <div class="hud-remain">เหลือ <span id="hud-remain">0</span> ใบ</div>
+    </div>
+    <div class="hud-right">
+      <button id="btn-sound" class="icon-btn" type="button" aria-label="เปิด/ปิดเสียง">🔊</button>
+      <button id="btn-restart" class="icon-btn" type="button" aria-label="เริ่มด่านนี้ใหม่">↻</button>
+    </div>
+  </header>
+
+  <main id="board" aria-label="กระดาน"></main>
+
+  <div id="side">
+  <section id="parked" aria-label="ไพ่ที่นำออก">
+    <div class="pslot"></div><div class="pslot"></div><div class="pslot"></div>
+  </section>
+
+  <section id="tray" aria-label="ถาดเก็บไพ่">
+    <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+    <div class="slot"></div><div class="slot"></div><div class="slot"></div>
+  </section>
+
+  <nav id="tools">
+    <button id="btn-undo" class="tool" type="button">
+      <span class="tool-icon">↩</span><span class="tool-label">ย้อนกลับ</span><span class="tool-count" id="cnt-undo">0</span>
+    </button>
+    <button id="btn-shuffle" class="tool" type="button">
+      <span class="tool-icon">🔀</span><span class="tool-label">สลับไพ่</span><span class="tool-count" id="cnt-shuffle">0</span>
+    </button>
+    <button id="btn-pop" class="tool" type="button">
+      <span class="tool-icon">⤴</span><span class="tool-label">นำออก 3</span><span class="tool-count" id="cnt-pop">0</span>
+    </button>
+  </nav>
+  </div>
+</div>
+
+<div id="stage" aria-hidden="true"></div>
+
+<div id="modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box">
+    <h2 id="modal-title"></h2>
+    <p id="modal-text"></p>
+    <div id="modal-buttons"></div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

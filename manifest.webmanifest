@@ -1,0 +1,17 @@
+{
+  "name": "ไพ่นกกระจอก จับ 3",
+  "short_name": "ไพ่นกกระจอก",
+  "description": "เกมจับคู่ไพ่นกกระจอก 3 ใบ ไม่มีโฆษณา",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f6b4f",
+  "theme_color": "#0f6b4f",
+  "lang": "th",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
